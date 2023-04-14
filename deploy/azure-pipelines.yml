@@ -19,11 +19,11 @@ stages:
   parameters:
     environmentType: Test
     resourceGroupName: TestCloudRG
-    serviceConnectionName: ToyWebsiteTest
+    serviceConnectionName: test-env-azure
 
 # Deploy to the production environment.
 - template: pipeline-templates/deploy.yml
   parameters:
     environmentType: Production
     resourceGroupName: ProdCloudRG
-    serviceConnectionName: ToyWebsiteProduction
+    serviceConnectionName: prod-env-azure
