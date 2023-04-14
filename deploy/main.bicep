@@ -9,6 +9,12 @@ param location string = resourceGroup().location
 @description('The name of the App Service app.')
 param appServiceAppName string = 'toy-${uniqueString(resourceGroup().id)}'
 
+@description('The name of the App Service app.')
+@minLength(3)
+@maxLength(24)
+param storageaccountName string = 'test${uniqueString(resourceGroup().id)}'
+
+
 var appServicePlanName = 'toy-product-launch-plan'
 
 var environmentConfigurationMap = {
@@ -84,7 +90,7 @@ module storage 'modules/storage.bicep' = {
   name: 'test-storage-account'
   params: {
     location: location
-    storageAccountName: 'teststoragareaccountbicep'
+    storageAccountName: storageaccountName
     environmentSku: environmentConfigurationMap[environmentType].toyManualsStorageAccount.sku
   }
 }
