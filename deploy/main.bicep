@@ -76,7 +76,7 @@ name: 'toy-launch-name'
     appServiceAppName: appServiceAppName
     appServicePlanName: appServicePlanName
     location: location
-    environmentSku: environmentConfigurationMap[environmentType].appServicePlan
+    environmentSku: environmentConfigurationMap[environmentType].appServicePlan.sku
   }
 }
 
@@ -85,7 +85,7 @@ module storage 'modules/storage.bicep' = {
   params: {
     location: location
     storageAccountName: 'test-storage-account-second'
-    environmentSku: environmentConfigurationMap[environmentType].toyManualsStorageAccount
+    environmentSku: environmentConfigurationMap[environmentType].toyManualsStorageAccount.sku
   }
 }
 
