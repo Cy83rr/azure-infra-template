@@ -12,7 +12,7 @@ param appServiceAppName string = 'toy-${uniqueString(resourceGroup().id)}'
 var appServicePlanName = 'toy-product-launch-plan'
 
 var environmentConfigurationMap = {
-  nonprod: {
+  Test: {
     appServicePlan: {
       sku: {
         name: 'F1'
@@ -25,7 +25,7 @@ var environmentConfigurationMap = {
       }
     }
   }
-  prod: {
+  Production: {
     appServicePlan: {
       sku: {
         name: 'S1'
@@ -40,10 +40,10 @@ var environmentConfigurationMap = {
   }
 }
 
-@description('The type of environment. This must be nonprod or prod.')
+@description('The type of environment. This must be Test or Production.')
 @allowed([
-  'nonprod'
-  'prod'
+  'Test'
+  'Production'
 ])
 param environmentType string
 
