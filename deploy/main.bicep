@@ -84,7 +84,7 @@ module storage 'modules/storage.bicep' = {
   name: 'test-storage-account'
   params: {
     location: location
-    storageAccountName: 'test-storage-account-second'
+    storageAccountName: 'teststoragareaccountbicep'
     environmentSku: environmentConfigurationMap[environmentType].toyManualsStorageAccount.sku
   }
 }
