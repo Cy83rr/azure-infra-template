@@ -1,8 +1,3 @@
-//targetScope = 'subscription'
-
-// @description('Name of the resource group')
-// param resourceGroupName string = 'TESTCLOUDWESTUS3'
-
 @description('The Azure region into which the resources should be deployed.')
 param location string = resourceGroup().location
 
@@ -17,6 +12,9 @@ param storageaccountName string = 'test${uniqueString(resourceGroup().id)}'
 
 var appServicePlanName = 'toy-product-launch-plan'
 
+@description('Name of the keyvault for secrets')
+param keyVaultName string = 'secret${uniqueString(resourceGroup().id)}'
+
 var environmentConfigurationMap = {
   Test: {
     appServicePlan: {
@@ -28,6 +26,13 @@ var environmentConfigurationMap = {
     toyManualsStorageAccount: {
       sku: {
         name: 'Standard_LRS'
+      }
+    }
+    toykeyvault: {
+      objectId: 'efb46152-9a7b-485a-ad5b-bfd36d446d24'
+      sku: {
+        name: 'standard'
+        family: 'A'
       }
     }
   }
@@ -43,6 +48,13 @@ var environmentConfigurationMap = {
         name: 'Standard_ZRS'
       }
     }
+    toykeyvault: {
+      objectid: '910c059e-d5a9-4d8d-9146-b11918fda356'
+      sku: {
+        name: 'premium'
+        family: 'A'
+      }
+    }
   }
 }
 
@@ -53,18 +65,20 @@ var environmentConfigurationMap = {
 ])
 param environmentType string
 
-// resource rg 'Microsoft.Resources/resourceGroups@2022-09-01' = {
-//   name: resourceGroupName
-//   location: location
-// }
-
 // ============ main.bicep ============
 
-// resource keyVault 'Microsoft.KeyVault/vaults@2019-09-01' existing = {
-//   name: 'kv-contoso'
-//   scope: rg
-//   // scope: resourceGroup('rg-contoso')   - if key vault is in a different resource group
-// }
+module keyvault 'modules/keyvault.bicep' ={
+  name: 'toy-keyvault-name'
+  params: {
+    location: location
+    sku: environmentConfigurationMap[environmentType].toykeyvault.sku
+    enabledForDeployment: true
+    enabledForDiskEncryption: true
+    enabledForTemplateDeployment: true
+    keyVaultName: keyVaultName
+    objectId: environmentConfigurationMap[environmentType].toykeyvault.objectId
+  }
+}
 
 // module db 'modules/sql.bicep' = {
 //   name: 'sqlDbDeployment1'
