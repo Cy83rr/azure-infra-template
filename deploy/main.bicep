@@ -181,7 +181,7 @@ module db 'modules/sql.bicep' ={
     sku: environmentConfigurationMap[environmentType].mysqldatabase.sku
     SkuSizeMB: SQLSkuSizeMB
     sqlServerName: 'sqltestserver'
-    subnetId: resourceId('subnet', subnetName)
+    subnetId: resourceId('virtualNetworks/subnet', subnetName) 
     virtualNetworkRuleName: virtualNetworkRuleName
   }
 }
