@@ -73,11 +73,9 @@ var environmentConfigurationMap = {
     }
     mysqldatabase: {
       sku: {
-        name: 'GP_Gen5_2' //skuName
-        tier: 'GeneralPurpose' //SkuTier - GeneralPurpose, Basic, MemoryoPTIMIZED
-        capacity: 2 //skuCapacity
-        size: '${SQLSkuSizeMB}'  //size in mb - a string is expected here but a int for the storageProfile...
-        family: 'Gen5' //skuFamily
+        name: 'Standard_B1ms' //skuName
+        tier: 'GeneralPurpose' //SkuTier - SkuTier - Burstable Generalpurpose MemoryOptimized
+
       }
     }
   }
@@ -107,11 +105,8 @@ var environmentConfigurationMap = {
     }
     mysqldatabase: {
       sku: {
-        name: 'GP_Gen5_2' //skuName
-        tier: 'GeneralPurpose' //SkuTier - GeneralPurpose, Basic, MemoryoPTIMIZED
-        capacity: 2 //skuCapacity
-        size: '${5120}'  //size in mb - a string is expected here but a int for the storageProfile...
-        family: 'Gen5' //skuFamily
+        name: 'Standard_B1ms' //skuName
+        tier: 'Burstable' //SkuTier - Burstable Generalpurpose MemoryOptimized
       }
     }
   }
@@ -124,6 +119,20 @@ var environmentConfigurationMap = {
 ])
 param environmentType string
 
+
+@description('Provide an array of firewall rules to be applied to the MySQL server.')
+param firewallRules array = [
+  {
+    name: 'rule1'
+    startIPAddress: '192.168.0.1'
+    endIPAddress: '192.168.0.255'
+  }
+  {
+    name: 'rule2'
+    startIPAddress: '192.168.1.1'
+    endIPAddress: '192.168.1.255'
+  }
+]
 // ============ main.bicep ============
 //First create the keyvault for passwords, put them there, then uncomment the other stuff
 // module kv 'modules/keyvault.bicep' ={
@@ -154,22 +163,61 @@ module networking 'modules/network.bicep' ={
   }
 }
 
-module db 'modules/sql.bicep' ={
-  name: 'sqlDeployment'
+// module db 'modules/sql.bicep' ={
+//   name: 'sqlDeployment'
+//   params: {
+//     administratorLogin: 'alcesitadmin' 
+//     backupRetentionDays: 7
+//     geoRedundantBackup: 'Disabled'
+//     location: location
+//     administratorLoginPassword: kvRef.getSecret('mySqlPassword')
+//     mysqlVersion: mysqlVersion
+//     sku: environmentConfigurationMap[environmentType].mysqldatabase.sku
+//     SkuSizeMB: SQLSkuSizeMB
+//     sqlServerName: sqlservername
+//     subnetId: resourceId('virtualNetworks/subnet', subnetName) 
+//     virtualNetworkRuleName: virtualNetworkRuleName
+//   }
+// }
+
+// module db 'modules/sql.bicep' ={
+//   name: 'sqlDeployment'
+//   params: {
+//     administratorLogin: 'alcesitadmin' 
+//     administratorLoginPassword: kvRef.getSecret('mySqlPassword')
+//     backupRetentionDays: 7
+//     geoRedundantBackup: 'Disabled'
+//     location: location
+//     resourceNamePrefix: 'testing'
+//     sku: environmentConfigurationMap[environmentType].mysqldatabase.sku
+//     sqlServerName: sqlservername
+//   }
+// } 
+
+module db 'modules/sql.bicep' = {
+  name: 'mysqlDeployment'
   params: {
-    administratorLogin: 'alcesitadmin' 
+    administratorLogin: 'alcesitadmin'
+    administratorLoginPassword: kvRef.getSecret('mySqlPassword')
     backupRetentionDays: 7
     geoRedundantBackup: 'Disabled'
     location: location
-    myPassword: kvRef.getSecret('mySqlPassword')
-    mysqlVersion: mysqlVersion
+    resourceNamePrefix: 'testing'
     sku: environmentConfigurationMap[environmentType].mysqldatabase.sku
-    SkuSizeMB: SQLSkuSizeMB
-    sqlServerName: sqlservername
-    subnetId: resourceId('virtualNetworks/subnet', subnetName) 
-    virtualNetworkRuleName: virtualNetworkRuleName
   }
 }
+
+@batchSize(1)
+module createFirewallRules 'modules/firewallrules.bicep' = [for i in range(0, ((length(firewallRules) > 0) ? length(firewallRules) : 1)): {
+  name: 'firewallRules-${i}'
+  params: {
+    ip: firewallRules[i]
+    serverName: sqlservername
+  }
+  dependsOn: [
+    db
+  ]
+}]
 
 module app 'modules/app.bicep' ={
 name: 'toy-launch-name'
