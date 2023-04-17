@@ -9,6 +9,8 @@ param appServiceAppName string = 'toy-${uniqueString(resourceGroup().id)}'
 @maxLength(24)
 param storageaccountName string = 'test${uniqueString(resourceGroup().id)}'
 
+param sqlservername string = 'mysql_${uniqueString(resourceGroup().id)}_${environmentType}'
+
 
 var appServicePlanName = 'toy-product-launch-plan'
 
@@ -180,7 +182,7 @@ module db 'modules/sql.bicep' ={
     mysqlVersion: mysqlVersion
     sku: environmentConfigurationMap[environmentType].mysqldatabase.sku
     SkuSizeMB: SQLSkuSizeMB
-    sqlServerName: 'sqltestserver'
+    sqlServerName: sqlservername
     subnetId: resourceId('virtualNetworks/subnet', subnetName) 
     virtualNetworkRuleName: virtualNetworkRuleName
   }
