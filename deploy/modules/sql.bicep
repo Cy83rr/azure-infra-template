@@ -75,7 +75,8 @@ resource mysqlDbServer 'Microsoft.DBforMySQL/servers@2017-12-01' = {
 
 @batchSize(1)
 resource firewallRules 'Microsoft.DBforMySQL/servers/firewallRules@2017-12-01' = [for rule in firewallrules: {
-  name: '${mysqlDbServer.name}/${rule.Name}'
+  parent: mysqlDbServer
+  name: '${rule.Name}'
   properties: {
     startIpAddress: rule.StartIpAddress
     endIpAddress: rule.EndIpAddress
