@@ -16,7 +16,30 @@ var serviceBusNamespaceName = 'toy-service-bus'
 
 var serviceBusQueueName = 'toy-queue'
 
+param SQLSkuSizeMB int = 5120
 
+@description('MySQL version')
+@allowed([
+  '5.6'
+  '5.7'
+  '8.0'
+])
+param mysqlVersion string = '8.0'
+
+@description('Virtual Network Name')
+param virtualNetworkName string = 'azure_mysql_vnet'
+
+@description('Subnet Name')
+param subnetName string = 'azure_mysql_subnet'
+
+@description('Virtual Network RuleName')
+param virtualNetworkRuleName string = 'AllowSubnet'
+
+@description('Virtual Network Address Prefix')
+param vnetAddressPrefix string = '10.0.0.0/16'
+
+@description('Subnet Address Prefix')
+param subnetPrefix string = '10.0.0.0/16'
 
 @description('Name of the keyvault for secrets')
 param keyVaultName string = 'secret${uniqueString(resourceGroup().id)}'
@@ -46,6 +69,15 @@ var environmentConfigurationMap = {
         name: 'Standard'
       }
     }
+    mysqldatabase: {
+      sku: {
+        name: 'GP_Gen5_2' //skuName
+        tier: 'GeneralPurpose' //SkuTier - GeneralPurpose, Basic, MemoryoPTIMIZED
+        capacity: 2 //skuCapacity
+        size: '${SQLSkuSizeMB}'  //size in mb - a string is expected here but a int for the storageProfile...
+        family: 'Gen5' //skuFamily
+      }
+    }
   }
   Production: {
     appServicePlan: {
@@ -69,6 +101,15 @@ var environmentConfigurationMap = {
     servicebus: {
       sku: {
         name: 'Standard'
+      }
+    }
+    mysqldatabase: {
+      sku: {
+        name: 'GP_Gen5_2' //skuName
+        tier: 'GeneralPurpose' //SkuTier - GeneralPurpose, Basic, MemoryoPTIMIZED
+        capacity: 2 //skuCapacity
+        size: '${5120}'  //size in mb - a string is expected here but a int for the storageProfile...
+        family: 'Gen5' //skuFamily
       }
     }
   }
@@ -100,11 +141,48 @@ resource kvRef 'Microsoft.KeyVault/vaults@2023-02-01' existing = {
   //scope: resourceGroup(subscription().id, resourceGroup().id )
 }   
 
-module db 'modules/sql.bicep' = {
-  name: 'sqlDbDeployment1'
+// module db 'modules/sql.bicep' = {
+//   name: 'sqlDbDeployment1'
+//   params: {
+//     myPassword: kvRef.getSecret('mySqlPassword')
+//     location: location
+//   }
+// }
+
+// module db 'modules/sql.bicep' ={
+//   name: 'sqldeployment'
+//   params: {
+//     location: location
+//     myPassword: kvRef.getSecret('mySqlPassword')
+//     sku: environmentConfigurationMap[environmentType].mysqldatabase.sku
+//   }
+// }
+
+module networking 'modules/network.bicep' ={
+  name: 'networkingRules'
   params: {
-    myPassword: kvRef.getSecret('mySqlPassword')
     location: location
+    subnetName: subnetName
+    subnetPrefix: subnetPrefix
+    virtualNetworkName: virtualNetworkName
+    vnetAddressPrefix: vnetAddressPrefix
+  }
+}
+
+module db 'modules/sql.bicep' ={
+  name: 'sqlDeployment'
+  params: {
+    administratorLogin: 'alcesitadmin' 
+    backupRetentionDays: 7
+    geoRedundantBackup: 'Disabled'
+    location: location
+    myPassword: kvRef.getSecret('mySqlPassword')
+    mysqlVersion: mysqlVersion
+    sku: environmentConfigurationMap[environmentType].mysqldatabase.sku
+    SkuSizeMB: SQLSkuSizeMB
+    sqlServerName: 'sqltestserver'
+    subnetId: resourceId('subnet', subnetName)
+    virtualNetworkRuleName: virtualNetworkRuleName
   }
 }
 
