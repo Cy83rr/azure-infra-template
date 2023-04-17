@@ -9,7 +9,7 @@ param appServiceAppName string = 'toy-${uniqueString(resourceGroup().id)}'
 @maxLength(24)
 param storageaccountName string = 'test${uniqueString(resourceGroup().id)}'
 
-param sqlservername string = 'mysql_${uniqueString(resourceGroup().id)}_${environmentType}'
+param sqlservername string = 'mysql-${uniqueString(resourceGroup().id)}'
 
 
 var appServicePlanName = 'toy-product-launch-plan'
@@ -142,23 +142,6 @@ resource kvRef 'Microsoft.KeyVault/vaults@2023-02-01' existing = {
   name: keyVaultName     
   //scope: resourceGroup(subscription().id, resourceGroup().id )
 }   
-
-// module db 'modules/sql.bicep' = {
-//   name: 'sqlDbDeployment1'
-//   params: {
-//     myPassword: kvRef.getSecret('mySqlPassword')
-//     location: location
-//   }
-// }
-
-// module db 'modules/sql.bicep' ={
-//   name: 'sqldeployment'
-//   params: {
-//     location: location
-//     myPassword: kvRef.getSecret('mySqlPassword')
-//     sku: environmentConfigurationMap[environmentType].mysqldatabase.sku
-//   }
-// }
 
 module networking 'modules/network.bicep' ={
   name: 'networkingRules'
