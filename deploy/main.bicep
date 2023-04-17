@@ -12,6 +12,12 @@ param storageaccountName string = 'test${uniqueString(resourceGroup().id)}'
 
 var appServicePlanName = 'toy-product-launch-plan'
 
+var serviceBusNamespaceName = 'toy-service-bus'
+
+var serviceBusQueueName = 'toy-queue'
+
+
+
 @description('Name of the keyvault for secrets')
 param keyVaultName string = 'secret${uniqueString(resourceGroup().id)}'
 
@@ -35,6 +41,9 @@ var environmentConfigurationMap = {
         family: 'A'
       }
     }
+    servicebus: {
+      name: 'Standard'
+    }
   }
   Production: {
     appServicePlan: {
@@ -55,6 +64,9 @@ var environmentConfigurationMap = {
         family: 'A'
       }
     }
+    servicebus: {
+      name: 'Standard'
+    }
   }
 }
 
@@ -66,29 +78,30 @@ var environmentConfigurationMap = {
 param environmentType string
 
 // ============ main.bicep ============
-
-module keyvault 'modules/keyvault.bicep' ={
-  name: 'toy-keyvault-name'
-  params: {
-    location: location
-    sku: environmentConfigurationMap[environmentType].toykeyvault.sku
-    enabledForDeployment: true
-    enabledForDiskEncryption: true
-    enabledForTemplateDeployment: true
-    keyVaultName: keyVaultName
-    objectId: environmentConfigurationMap[environmentType].toykeyvault.objectId
-  }
-}
-
-// module db 'modules/sql.bicep' = {
-//   name: 'sqlDbDeployment1'
-//   scope: rg
+//First create the keyvault for passwords, put them there, then uncomment the other stuff
+// module kv 'modules/keyvault.bicep' ={
+//   name: 'toy-keyvault-name'
 //   params: {
-//     myPassword: keyVault.getSecret('mySqlPassword')
-//     location: rg.location
-//     // myPassword: keyVault.getSecret('mySqlPassword', '2cc1676124b77bc9a1bfd30d8f4b6225')
+//     location: location
+//     sku: environmentConfigurationMap[environmentType].toykeyvault.sku
+//     enabledForDeployment: true
+//     enabledForDiskEncryption: true
+//     enabledForTemplateDeployment: true
+//     keyVaultName: keyVaultName
+//     objectId: environmentConfigurationMap[environmentType].toykeyvault.objectId
 //   }
 // }
+resource kvRef 'Microsoft.KeyVault/vaults@2023-02-01' existing = {     
+  name: keyVaultName     
+}   
+
+module db 'modules/sql.bicep' = {
+  name: 'sqlDbDeployment1'
+  params: {
+    myPassword: kvRef.getSecret('mySqlPassword')
+    location: location
+  }
+}
 
 module app 'modules/app.bicep' ={
 name: 'toy-launch-name'
@@ -106,6 +119,16 @@ module storage 'modules/storage.bicep' = {
     location: location
     storageAccountName: storageaccountName
     environmentSku: environmentConfigurationMap[environmentType].toyManualsStorageAccount.sku
+  }
+}
+
+module servicebus 'modules/servicebus.bicep' ={
+  name: 'test-service-bus'
+  params: {
+    location: location
+    serviceBusNamespaceName: serviceBusNamespaceName
+    serviceBusQueueName: serviceBusQueueName
+    sku: environmentConfigurationMap[environmentType].servicebus.sku
   }
 }
 
