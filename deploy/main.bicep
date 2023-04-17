@@ -97,6 +97,7 @@ param environmentType string
 // }
 resource kvRef 'Microsoft.KeyVault/vaults@2023-02-01' existing = {     
   name: keyVaultName     
+  scope: resourceGroup(subscription().id, resourceGroup().id )
 }   
 
 module db 'modules/sql.bicep' = {
