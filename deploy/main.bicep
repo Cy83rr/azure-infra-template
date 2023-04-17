@@ -42,7 +42,9 @@ var environmentConfigurationMap = {
       }
     }
     servicebus: {
-      name: 'Standard'
+      sku: {
+        name: 'Standard'
+      }
     }
   }
   Production: {
@@ -65,7 +67,9 @@ var environmentConfigurationMap = {
       }
     }
     servicebus: {
-      name: 'Standard'
+      sku: {
+        name: 'Standard'
+      }
     }
   }
 }
